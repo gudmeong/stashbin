@@ -1,16 +1,13 @@
 ARG ARCH
 
-FROM --platform=${ARCH:-linux/amd64} golang:1.24 AS build
+FROM --platform=${ARCH:-linux/arm64} golang:1.24 AS build
 
 WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    nodejs \
-    npm \
-    make \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update
+RUN apt-get install -y nodejs npm make
+RUN apt-get clean
+RUN rm -rf /var/lib/apt/lists/*
 
 RUN npm i -g pnpm
 
