@@ -27,7 +27,7 @@ RUN make generate
 RUN make build
 
 
-FROM debian:bookworm-slim as runner
+FROM debian:bookworm-slim AS runner
 
 WORKDIR /app
 
