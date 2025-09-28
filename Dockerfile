@@ -34,6 +34,6 @@ WORKDIR /app
 COPY --from=build /app/stashbin .
 COPY --from=build /app/public ./public
 COPY ./database/migrations ./database/migrations
-EXPOSE 500 90 10000
+EXPOSE 500 900 10000
 
 CMD ["./stashbin"]
