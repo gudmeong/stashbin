@@ -18,7 +18,6 @@ COPY go.mod go.sum package.json bun.lock ./
 
 RUN make install
 RUN go mod verify
-RUN go install github.com/a-h/templ/cmd/templ@latest
 
 COPY . .
 
@@ -32,6 +31,5 @@ WORKDIR /app
 
 COPY --from=build /app/stashbin .
 COPY --from=build /app/public ./public
-COPY ./database/migrations ./database/migrations
 
 CMD ["./stashbin"]

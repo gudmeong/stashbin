@@ -9,3 +9,14 @@ stashbin
 # lode session scraps
 lode/tmp/*
 !lode/tmp/.gitkeep
+
+# Go
+vendor/
+*.test
+*.out
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

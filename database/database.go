@@ -1,60 +1,41 @@
 package database
 
 import (
-	"database/sql"
+	"context"
 	"time"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"github.com/mrmissx/stashbin/utils"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-var session *sqlx.DB
+var session *mongo.Database
 
-func runMigrations(instance *sql.DB) {
-	utils.Logger.Info("Running migrations...")
-	driver, err := postgres.WithInstance(instance, &postgres.Config{})
-	if err != nil {
-		utils.Logger.Fatal("Could not create migrate driver: ", err)
-	}
-	m, err := migrate.NewWithDatabaseInstance("file://database/migrations", "postgres", driver)
-	if err != nil {
-		utils.Logger.Fatal("Failed to create migration instance: ", err)
-	}
-	if err := m.Up(); err != nil {
-		if err == migrate.ErrNoChange {
-			utils.Logger.Info("Database schema is up to date")
-			return
-		} else {
-			utils.Logger.Fatal("Failed to apply migrations")
-		}
-	}
-	utils.Logger.Info("Migrations completed")
-}
-
+// ConnectDb opens the Mongo client and verifies connectivity before serving.
+// DB_URI accepts both mongodb:// and mongodb+srv:// (Atlas).
 func ConnectDb() {
 	dbUri := utils.GetEnv("DB_URI", "")
 	if dbUri == "" {
 		utils.Logger.Fatal("DB_URI is not set")
 	}
 
-	utils.Logger.Info("Connecting to database...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	db := sqlx.MustConnect("postgres", dbUri)
-	db.SetMaxIdleConns(5)
-	db.SetMaxOpenConns(10)
-	db.SetConnMaxIdleTime(10 * time.Minute)
-	db.SetConnMaxLifetime(1 * time.Hour)
-	utils.Logger.Info("Successfuly connected database")
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbUri))
+	if err != nil {
+		utils.Logger.Fatal("Failed to create Mongo client: ", err)
+	}
+	if err := client.Ping(ctx, readpref.Primary()); err != nil {
+		utils.Logger.Fatal("Failed to ping Mongo: ", err)
+	}
 
-	runMigrations(db.DB)
-
-	session = db
+	dbName := utils.GetEnv("DB_NAME", "stashbin")
+	session = client.Database(dbName)
+	utils.Logger.Info("Successfully connected database")
 }
 
-func GetDatabase() *sqlx.DB {
+func GetDatabase() *mongo.Database {
 	return session
 }
