@@ -3,10 +3,10 @@ package api
 import (
 	"net/http"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/mrmissx/stashbin/database/model"
 	"github.com/mrmissx/stashbin/utils/response"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func GetDocumentBySlug(c echo.Context) error {
@@ -16,7 +16,7 @@ func GetDocumentBySlug(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.ErrNoKeyQuery)
 	}
 
-	db := c.Get("db").(*sqlx.DB)
+	db := c.Get("db").(*mongo.Database)
 	err := doc.GetBySlug(db, slug)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, response.ErrDocumentNotFound)
@@ -37,7 +37,7 @@ func CreateDocument(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.ErrContentEmpty)
 	}
 
-	db := c.Get("db").(*sqlx.DB)
+	db := c.Get("db").(*mongo.Database)
 	if err := doc.Create(db); err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrInternalServerError)
 	}
